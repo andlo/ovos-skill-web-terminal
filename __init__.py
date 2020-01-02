@@ -135,8 +135,7 @@ class WebTerminal(MycroftSkill):
             self.settings['installed'] = True
             return True
         except Exception:
-            self.log.info("Web Terminal is not installed '
-                          + '- something went wrong!")
+            self.log.info("Web Terminal is not installed e- something went wrong!")
             self.speak_dialog('installed_BAD')
             return False
 
