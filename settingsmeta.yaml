@@ -1,22 +1,22 @@
-
 skillMetadata:
-  sections:
-    - name: Options << Name of section
-      fields:
-        - name: internal_python_variable_name
-          type: text
-          label: Setting Friendly Display Name
-          value: ""
-          placeholder: demo prompt in the input box
-    - name: Login << Name of another section
-      fields:
-        - type: label
-          label: Just a little bit of extra info for the user to understand following settings
-        - name: username
-          type: text
-          label: Username
-          value: ""
-        - name: password
-          type: password
-          label: Password
-          value: ""
+   sections:
+      - name: Web Terminal
+        fields:
+          - name: terminal_port
+            type: text
+            label: web Terminal Port
+            value: "8022"
+          - name: terminal_enabled
+            type: checkbox
+            label: Auto start Web Termial
+            value: "False"
+      - name: Web CLI client
+        fields:
+          - name: cli_port
+            type: text
+            label: web CLI client Port
+            value: "8080"
+          - name: cli_enabled
+            type: checkbox
+            label: Auto start Web CLI Client
+            value: "True"
