@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from mycroft import MycroftSkill, intent_file_handler
-from shutil import copyfile
 import os
 import subprocess
 import signal
@@ -29,7 +28,7 @@ class WebTerminal(MycroftSkill):
 
     def initialize(self):
         self.SafePath = self.file_system.path
-        if self.settings.get("installed") is not True or self.settings.get("installed") is None:
+        if not self.settings.get("installed") or self.settings.get("installed") is None:
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
             self.settings["terminal_pid"] = None
@@ -58,9 +57,10 @@ class WebTerminal(MycroftSkill):
         if self.settings.get("terminal_pid)") is None:
             port = str(self.settings.get("terminal_port"))
             home = os.path.expanduser('~')
-            proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p ' + port + 
-                                   ' bash --init-file ' + self.SafePath + '/bashrc',
-                                   cwd=home , preexec_fn=os.setsid, shell=True)
+            proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p '
+                                    + port + ' bash --init-file '
+                                    + self.SafePath + '/bashrc',
+                                    cwd=home, preexec_fn=os.setsid, shell=True)
             self.settings["terminal_pid"] = proc.pid
             url = os.uname().nodename + ':' + port
             self.log.info('Terminal started - http://' + url)
@@ -74,8 +74,8 @@ class WebTerminal(MycroftSkill):
             port = str(self.settings.get("cli_port"))
             home = os.path.expanduser('~')
             proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p ' +
-                                   port + ' mycroft-cli-client',
-                                   cwd=home , preexec_fn=os.setsid, shell=True)
+                                    port + ' mycroft-cli-client',
+                                    cwd=home, preexec_fn=os.setsid, shell=True)
             self.settings["cli_pid"] = proc.pid
             url = os.uname().nodename + ':' + port
             self.log.info('CLI started - http://' + url)
@@ -112,29 +112,34 @@ class WebTerminal(MycroftSkill):
             return False
 
     def install(self):
-            try:
-                self.log.info("Installing Web Terminal...")
-                proc = subprocess.Popen('git clone https://github.com/tsl0922/ttyd.git',
-                                       cwd=self.SafePath , preexec_fn=os.setsid, shell=True)
-                proc.wait()
-                proc = subprocess.Popen('mkdir build', cwd=self.SafePath + '/ttyd',
-                                       preexec_fn=os.setsid, shell=True)
-                proc.wait()
-                proc = subprocess.Popen('cmake ..', cwd=self.SafePath + '/ttyd/build',
-                                       preexec_fn=os.setsid, shell=True)
-                proc.wait()
-                proc = subprocess.Popen('make', cwd=self.SafePath + '/ttyd/build',
-                                       preexec_fn=os.setsid, shell=True)
-                proc.wait()
-                # copyfile(self._dir + '/bashrc', self.SafePath + '/bashrc')
-                self.log.info("Installed OK")
+        try:
+            self.log.info("Installing Web Terminal...")
+            proc = subprocess.Popen('git clone'
+                                    + 'https://github.com/tsl0922/ttyd.git',
+                                    cwd=self.SafePath, preexec_fn=os.setsid,
+                                    shell=True)
+            proc.wait()
+            proc = subprocess.Popen('mkdir build', cwd=self.SafePath + '/ttyd',
+                                    preexec_fn=os.setsid, shell=True)
+            proc.wait()
+            proc = subprocess.Popen('cmake ..', cwd=self.SafePath
+                                    + '/ttyd/build',
+                                    preexec_fn=os.setsid, shell=True)
+            proc.wait()
+            proc = subprocess.Popen('make', cwd=self.SafePath + '/ttyd/build',
+                                    preexec_fn=os.setsid, shell=True)
+            proc.wait()
+            # copyfile(self._dir + '/bashrc', self.SafePath + '/bashrc')
+            self.log.info("Installed OK")
 
-                self.settings['installed'] = True
-                return True
-            except Exception:
-                self.log.info("Web Terminal is not installed - something went wrong!")
-                self.speak_dialog('installed_BAD')
-                return False
+            self.settings['installed'] = True
+            return True
+        except Exception:
+            self.log.info("Web Terminal is not installed '
+                          + '- something went wrong!")
+            self.speak_dialog('installed_BAD')
+            return False
+
 
 def create_skill():
     return WebTerminal()

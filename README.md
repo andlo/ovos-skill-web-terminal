@@ -5,7 +5,7 @@ Start a web Terminal and/or Web CLI client
 This skill installs and run a web terminal and/or a web CLI client.
 
 After install there should be a running web CLI client wich you can acces from a browser on 
-http://<device>:8080 where <device> is the hostname of your mycroft device. 
+http://device:8080 where device is the hostname of your mycroft device. 
 
 Yo can start at terminal by saying "hey mycroft - run web terminal". Then there will be a full 
 shell running wich you can access from a browser on http://device:8080 where device is the
