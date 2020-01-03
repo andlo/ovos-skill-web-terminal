@@ -1,6 +1,6 @@
 """
 skill Web Terminal
-Copyright (C) 2018  Andreas Lorensen
+Copyright (C) 2020  Andreas Lorensen
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,8 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from mycroft import MycroftSkill, intent_file_handler
 import os
+from os.path import abspath, dirname
+from shutil import copyfile
 import subprocess
 import signal
+
 
 
 class WebTerminal(MycroftSkill):
@@ -28,6 +31,7 @@ class WebTerminal(MycroftSkill):
 
     def initialize(self):
         self.SafePath = self.file_system.path
+        self.SkillPath = abspath(dirname(__file__))
         if not self.settings.get("installed") or self.settings.get("installed") is None:
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
@@ -114,7 +118,7 @@ class WebTerminal(MycroftSkill):
     def install(self):
         try:
             self.log.info("Installing Web Terminal...")
-            proc = subprocess.Popen('git clone'
+            proc = subprocess.Popen('git clone '
                                     + 'https://github.com/tsl0922/ttyd.git',
                                     cwd=self.SafePath, preexec_fn=os.setsid,
                                     shell=True)
@@ -129,9 +133,8 @@ class WebTerminal(MycroftSkill):
             proc = subprocess.Popen('make', cwd=self.SafePath + '/ttyd/build',
                                     preexec_fn=os.setsid, shell=True)
             proc.wait()
-            # copyfile(self._dir + '/bashrc', self.SafePath + '/bashrc')
+            copyfile(self.SkillPath + '/bashrc', self.SafePath + '/bashrc')
             self.log.info("Installed OK")
-
             self.settings['installed'] = True
             return True
         except Exception:
