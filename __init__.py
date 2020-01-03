@@ -18,11 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from mycroft import MycroftSkill, intent_file_handler
 import os
-from os.path import abspath, dirname
 from shutil import copyfile
 import subprocess
 import signal
-
 
 
 class WebTerminal(MycroftSkill):
@@ -31,7 +29,7 @@ class WebTerminal(MycroftSkill):
 
     def initialize(self):
         self.SafePath = self.file_system.path
-        self.SkillPath = abspath(dirname(__file__))
+        self.SkillPath = self.root_dir
         if not self.settings.get("installed") or self.settings.get("installed") is None:
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
@@ -138,7 +136,7 @@ class WebTerminal(MycroftSkill):
             self.settings['installed'] = True
             return True
         except Exception:
-            self.log.info("Web Terminal is not installed e- something went wrong!")
+            self.log.info("Web Terminal is not installed - something went wrong!")
             self.speak_dialog('installed_BAD')
             return False
 
