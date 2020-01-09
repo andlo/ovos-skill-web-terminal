@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from mycroft import MycroftSkill, intent_file_handler
+from mycroft import MycroftSkill, intent_file_handler, MYCROFT_ROOT_PATH
 import os
 from shutil import copyfile
 import subprocess
@@ -30,6 +30,7 @@ class WebTerminal(MycroftSkill):
     def initialize(self):
         self.SafePath = self.file_system.path
         self.SkillPath = self.root_dir
+
         if not self.settings.get("installed") or self.settings.get("installed") is None:
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
@@ -78,7 +79,8 @@ class WebTerminal(MycroftSkill):
             port = str(self.settings.get("cli_port"))
             home = os.path.expanduser('~')
             proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p ' +
-                                    port + ' mycroft-cli-client',
+                                    port + ' ' + MYCROFT_ROOT_PATH + 
+                                    '/bin/mycroft-cli-client',
                                     cwd=home, preexec_fn=os.setsid, shell=True)
             self.settings["cli_pid"] = proc.pid
             url = os.uname().nodename + ':' + port
