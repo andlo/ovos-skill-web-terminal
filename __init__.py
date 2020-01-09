@@ -34,6 +34,8 @@ class WebTerminal(MycroftSkill):
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
             self.settings["terminal_pid"] = None
+        if not self.pid_exists(self.settings.get("cli_pid")):
+            self.settings["cli_pid"] = None
         if self.settings.get("terminal_enabled") and self.settings.get("terminal_pid") is None:
             self.run_terminal()
         if self.settings.get("cli_enabled") and self.settings.get("cli_pid") is None:
