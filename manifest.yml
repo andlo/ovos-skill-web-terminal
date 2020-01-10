@@ -1,3 +1,5 @@
 dependencies:
   system:
-    all: cmake g++ pkg-config git vim-common libwebsockets-dev libjson-c-dev libssl-dev
+    apt-get: cmake g++ pkg-config git vim-common libwebsockets-dev libjson-c-dev libssl-dev
+    dnf: make g++ pkg-config git vim-common libwebsockets-devel json-c-devel openssl-devel
+    

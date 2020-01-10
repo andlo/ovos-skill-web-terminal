@@ -37,6 +37,10 @@ class WebTerminal(MycroftSkill):
             self.settings["terminal_pid"] = None
         if not self.pid_exists(self.settings.get("cli_pid")):
             self.settings["cli_pid"] = None
+        if not self.settings.get("terminal_port"):
+            self.settings["terminal_port"] = '8022'
+        if not self.settings.get("cli_port"):
+            self.settings["cli_port"] = '8080'
         if self.settings.get("terminal_enabled") and self.settings.get("terminal_pid") is None:
             self.run_terminal()
         if self.settings.get("cli_enabled") and self.settings.get("cli_pid") is None:
