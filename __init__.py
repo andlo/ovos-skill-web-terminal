@@ -48,19 +48,34 @@ class WebTerminal(MycroftSkill):
 
     @intent_file_handler('terminal.start.intent')
     def handle_terminal_start(self, message):
-        self.run_terminal()
+        try:
+            url = self.run_terminal()
+            self.speak_dialog('terminal_started', data={"url": url})
+        except Exception:
+            self.speak_dialog('could.not.start')
 
     @intent_file_handler('terminal.stop.intent')
     def handle_terminal_stop(self, message):
-        self.stop_terminal()
+        try:
+            self.stop_terminal()
+        except Exception:
+            self.speak_dialog('could.not.start')
 
     @intent_file_handler('cli.start.intent')
     def handle_cli_start(self, message):
-        self.run_cli()
+        try:
+            url = self.run_cli()
+            self.speak_dialog('cli_started', data={"url": url})
+        except Exception:
+            self.speak_dialog('could.not.start')
 
     @intent_file_handler('cli.stop.intent')
     def handle_cli_stop(self, message):
-        self.stop_cli()
+        try:
+            self.stop_cli()
+            self.speak_dialog('cli_stoped')
+        except Exception:
+            pass
 
     def run_terminal(self):
         if self.settings.get("terminal_pid)") is None:
@@ -73,8 +88,7 @@ class WebTerminal(MycroftSkill):
             self.settings["terminal_pid"] = proc.pid
             url = os.uname().nodename + ':' + port
             self.log.info('Terminal started - http://' + url)
-            self.speak_dialog('terminal_started', data={"url": url})
-            return True
+            return url
         else:
             return False
 
@@ -89,8 +103,7 @@ class WebTerminal(MycroftSkill):
             self.settings["cli_pid"] = proc.pid
             url = os.uname().nodename + ':' + port
             self.log.info('CLI started - http://' + url)
-            self.speak_dialog('cli_started', data={"url": url})
-            return True
+            return url
         else:
             return False
 
@@ -109,7 +122,6 @@ class WebTerminal(MycroftSkill):
         if self.settings.get("cli_pid") is not None:
             os.killpg(self.settings.get("cli_pid"), signal.SIGTERM)
             self.settings["cli_pid"] = None
-            self.speak_dialog('cli_stoped')
             return True
         else:
             return False
