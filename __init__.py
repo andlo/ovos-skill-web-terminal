@@ -31,7 +31,8 @@ class WebTerminal(MycroftSkill):
         self.SafePath = self.file_system.path
         self.SkillPath = self.root_dir
 
-        if not self.settings.get("installed") or self.settings.get("installed") is None:
+        if (not self.settings.get("installed") or
+                self.settings.get("installed") is None):
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
             self.settings["terminal_pid"] = None
@@ -41,9 +42,11 @@ class WebTerminal(MycroftSkill):
             self.settings["terminal_port"] = '8022'
         if not self.settings.get("cli_port"):
             self.settings["cli_port"] = '8080'
-        if self.settings.get("terminal_enabled") and self.settings.get("terminal_pid") is None:
+        if (self.settings.get("terminal_enabled") and
+                self.settings.get("terminal_pid") is None):
             self.run_terminal()
-        if self.settings.get("cli_enabled") and self.settings.get("cli_pid") is None:
+        if (self.settings.get("cli_enabled") and
+                self.settings.get("cli_pid") is None):
             self.run_cli()
 
     @intent_file_handler('terminal.start.intent')
@@ -97,7 +100,7 @@ class WebTerminal(MycroftSkill):
             port = str(self.settings.get("cli_port"))
             home = os.path.expanduser('~')
             proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p ' +
-                                    port + ' ' + MYCROFT_ROOT_PATH + 
+                                    port + ' ' + MYCROFT_ROOT_PATH +
                                     '/bin/mycroft-cli-client',
                                     cwd=home, preexec_fn=os.setsid, shell=True)
             self.settings["cli_pid"] = proc.pid
@@ -156,7 +159,8 @@ class WebTerminal(MycroftSkill):
             self.settings['installed'] = True
             return True
         except Exception:
-            self.log.info("Web Terminal is not installed - something went wrong!")
+            self.log.info("Web Terminal is not installed - " +
+                          "something went wrong!")
             self.speak_dialog('installed_BAD')
             return False
 
