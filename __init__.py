@@ -154,6 +154,9 @@ class WebTerminal(MycroftSkill):
             proc = subprocess.Popen('make', cwd=self.SafePath + '/ttyd/build',
                                     preexec_fn=os.setsid, shell=True)
             proc.wait()
+            if not os.path.isfile(self.SafePath + '/ttyd/build/ttyd '):
+                self.log.info("Building Web Terminal (ttyd) failed...")
+                raise Exception
             copyfile(self.SkillPath + '/bashrc', self.SafePath + '/bashrc')
             self.log.info("Installed OK")
             self.settings['installed'] = True
