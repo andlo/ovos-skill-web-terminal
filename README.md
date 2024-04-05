@@ -2,6 +2,8 @@
 Start a web Terminal and/or Web CLI client
 
 ## About
+THIS SKILL DOSNT WORK ATM !!!
+
 This skill installs and run a web terminal and/or a web CLI client.
 
 After install there should be a running web CLI client wich you can acces from a browser on 

@@ -1,6 +1,6 @@
 """
 skill Web Terminal
-Copyright (C) 2020  Andreas Lorensen
+Copyright (C) 2024  Andreas Lorensen
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,40 +16,50 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from mycroft import MycroftSkill, intent_file_handler, MYCROFT_ROOT_PATH
+from ovos_bus_client.message import Message
+from ovos_workshop.decorators import intent_handler
+from ovos_workshop.intents import IntentBuilder
+from ovos_workshop.skills import OVOSSkill
+
 import os
 from shutil import copyfile
 import subprocess
 import signal
+import requests, json
+import platform
+#import shutil
 
 
-class WebTerminal(MycroftSkill):
-    def __init__(self):
-        MycroftSkill.__init__(self)
-
+class WebTerminal(OVOSSkill):
     def initialize(self):
-        self.SafePath = self.file_system.path
-        self.SkillPath = self.root_dir
-
+        
         if (not self.settings.get("installed") or
-                self.settings.get("installed") is None):
+            self.settings.get("installed") is None):
             self.install()
         if not self.pid_exists(self.settings.get("terminal_pid")):
             self.settings["terminal_pid"] = None
-        if not self.pid_exists(self.settings.get("cli_pid")):
-            self.settings["cli_pid"] = None
+        #if not self.pid_exists(self.settings.get("cli_pid")):
+        #    self.settings["cli_pid"] = None
         if not self.settings.get("terminal_port"):
             self.settings["terminal_port"] = '8022'
-        if not self.settings.get("cli_port"):
-            self.settings["cli_port"] = '8080'
-        if (self.settings.get("terminal_enabled") and
+        #if not self.settings.get("cli_port"):
+        #    self.settings["cli_port"] = '8080'
+        if (self.settings.get("terminal_enabled", True) and
                 self.settings.get("terminal_pid") is None):
             self.run_terminal()
-        if (self.settings.get("cli_enabled") and
-                self.settings.get("cli_pid") is None):
-            self.run_cli()
+        #if (self.settings.get("cli_enabled") and
+        #        self.settings.get("cli_pid") is None):
+        #    self.run_cli()
+        #self.install_ttyd()
+        #self.run_terminal()
+    
+    @property
+    def ttyd_path(self) -> str:
+        """Path to  ttyd."""
+        return self.file_system.path + '/ttyd'
 
-    @intent_file_handler('terminal.start.intent')
+    
+    @intent_handler('terminal.start.intent')
     def handle_terminal_start(self, message):
         try:
             url = self.run_terminal()
@@ -57,22 +67,22 @@ class WebTerminal(MycroftSkill):
         except Exception:
             self.speak_dialog('could.not.start')
 
-    @intent_file_handler('terminal.stop.intent')
+    @intent_handler('terminal.stop.intent')
     def handle_terminal_stop(self, message):
         try:
             self.stop_terminal()
         except Exception:
             self.speak_dialog('could.not.start')
 
-    @intent_file_handler('cli.start.intent')
-    def handle_cli_start(self, message):
-        try:
-            url = self.run_cli()
-            self.speak_dialog('cli_started', data={"url": url})
-        except Exception:
-            self.speak_dialog('could.not.start')
+    #@intent_handler('cli.start.intent')
+    #def handle_cli_start(self, message):
+    #    try:
+    #        url = self.run_cli()
+    #        self.speak_dialog('cli_started', data={"url": url})
+    #    except Exception:
+    #        self.speak_dialog('could.not.start')
 
-    @intent_file_handler('cli.stop.intent')
+    @intent_handler('cli.stop.intent')
     def handle_cli_stop(self, message):
         try:
             self.stop_cli()
@@ -83,10 +93,10 @@ class WebTerminal(MycroftSkill):
     def run_terminal(self):
         if self.settings.get("terminal_pid)") is None:
             port = str(self.settings.get("terminal_port"))
+            self.log.info(self.ttyd_path + ' -p ' + port + ' -W bash')
             home = os.path.expanduser('~')
-            proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p '
-                                    + port + ' bash --init-file '
-                                    + self.SafePath + '/bashrc',
+            proc = subprocess.Popen(self.ttyd_path + ' p ' 
+                                    + port + ' -W bash', 
                                     cwd=home, preexec_fn=os.setsid, shell=True)
             self.settings["terminal_pid"] = proc.pid
             url = os.uname().nodename + ':' + port
@@ -95,20 +105,20 @@ class WebTerminal(MycroftSkill):
         else:
             return False
 
-    def run_cli(self):
-        if self.settings.get("cli_pid)") is None:
-            port = str(self.settings.get("cli_port"))
-            home = os.path.expanduser('~')
-            proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p ' +
-                                    port + ' ' + MYCROFT_ROOT_PATH +
-                                    '/bin/mycroft-cli-client',
-                                    cwd=home, preexec_fn=os.setsid, shell=True)
-            self.settings["cli_pid"] = proc.pid
-            url = os.uname().nodename + ':' + port
-            self.log.info('CLI started - http://' + url)
-            return url
-        else:
-            return False
+#    def run_cli(self):
+        #if self.settings.get("cli_pid)") is None:
+        #    port = str(self.settings.get("cli_port"))
+        #    home = os.path.expanduser('~')
+        #    proc = subprocess.Popen(self.SafePath + '/ttyd/build/ttyd -p ' +
+        #                            port + ' ' + MYCROFT_ROOT_PATH +
+        #                            '/bin/mycroft-cli-client',
+        #                            cwd=home, preexec_fn=os.setsid, shell=True)
+        #    self.settings["cli_pid"] = proc.pid
+        #    url = os.uname().nodename + ':' + port
+        #    self.log.info('CLI started - http://' + url)
+        #    return url
+        #else:
+        #    return False
 
     def stop_terminal(self):
         self.log.info("Stopping web terminal")
@@ -123,7 +133,8 @@ class WebTerminal(MycroftSkill):
     def stop_cli(self):
         self.log.info("Stopping mycroft-cli-client")
         if self.settings.get("cli_pid") is not None:
-            os.killpg(self.settings.get("cli_pid"), signal.SIGTERM)
+            os.killpg(self.settings.get(
+                "cli_pid"), signal.SIGTERM)
             self.settings["cli_pid"] = None
             return True
         else:
@@ -138,28 +149,9 @@ class WebTerminal(MycroftSkill):
 
     def install(self):
         try:
-            self.log.info("Installing Web Terminal...")
-            proc = subprocess.Popen('git clone '
-                                    + 'https://github.com/tsl0922/ttyd.git',
-                                    cwd=self.SafePath, preexec_fn=os.setsid,
-                                    shell=True)
-            proc.wait()
-            proc = subprocess.Popen('mkdir build', cwd=self.SafePath + '/ttyd',
-                                    preexec_fn=os.setsid, shell=True)
-            proc.wait()
-            proc = subprocess.Popen('cmake ..', cwd=self.SafePath
-                                    + '/ttyd/build',
-                                    preexec_fn=os.setsid, shell=True)
-            proc.wait()
-            proc = subprocess.Popen('make', cwd=self.SafePath + '/ttyd/build',
-                                    preexec_fn=os.setsid, shell=True)
-            proc.wait()
-            if not os.path.isfile(self.SafePath + '/ttyd/build/ttyd'):
-                self.log.info("Building Web Terminal (ttyd) failed...")
-                raise Exception
-            copyfile(self.SkillPath + '/bashrc', self.SafePath + '/bashrc')
-            self.log.info("Installed OK")
-            self.settings['installed'] = True
+            #copyfile(self.SkillPath + '/bashrc', self.SafePath + '/bashrc')
+            self.install_ttyd()
+            self.log.info("Web Terminal installed OK")
             return True
         except Exception:
             self.log.info("Web Terminal is not installed - " +
@@ -167,6 +159,29 @@ class WebTerminal(MycroftSkill):
             self.speak_dialog('installed_BAD')
             return False
 
+    def install_ttyd(self):
+        try:
+            url = requests.get("https://api.github.com/repos/tsl0922/ttyd/releases/latest")
+            text = url.text
+            data = json.loads(text)
+            assets = data["assets"]
+            pf = platform.machine()
+            print(pf)
+            for asset in assets:
+                if pf in asset["name"]: 
+                    print(asset["name"])
+                    r = requests.get(asset["browser_download_url"])
+                    f = open(self.ttyd_path, "wb")
+                    # f = open('/home/ovos/.local/share/mycroft/filesystem/skills/ovos-skill-web-terminal.andlo/ttyd', "wb")
+                    f.write(r.content)
+                    f.close
+                    os.chmod(self.ttyd_path, 0o777)
+            self.settings['installed'] = True
 
-def create_skill():
-    return WebTerminal()
+            return True
+
+        except Exception:
+            self.log.info("Web Terminal is not installed - something went wrong!")
+            self.settings['installed'] = False
+            self.speak_dialog('installed_BAD')
+            return False
